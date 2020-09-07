@@ -1,42 +1,73 @@
 import numpy
+# this import is the library used for file IO of .wav files
 from scipy.io import wavfile
-import plotly.graph_objs.scatter as go
-import plotly
+# this import is a graphing utility
+import plotly.graph_objs as go
+# this import will allow faster processing of larger files
+from multiprocessing import process
+# allows me to delete the old output if needed
 import os
-# Line comments are prefaced with a #
 
-def graph(x, y, title):
-    plotly.offline.plot({
-        "data": [go.Line(x=x, y=y)],
-        "layout": go.Layout(title=title)
-    }, auto_open=True)
+# function arguments such as title="Title" are optional variables for the function
+# they are given a default value if not supplied with a value
+def graph(x, y, title="Title", xaxis=None, yaxis=None):
+    # graphing function
+    # function borrowed and modified from: https://stackoverflow.com/a/62314178
+    trace = go.Scatter(x=x, y=y)
+    if not xaxis:
+        xaxis = {'title': 'X Axis'}
+    else:
+        xaxis = {'title': xaxis}
+    if not yaxis:
+        yaxis = {'title': 'Y Axis'}
+    else:
+        yaxis = {'title': yaxis}
 
+    my_layout = {
+        'title': str(title),
+        'title_x': 0.5,
+        'xaxis': xaxis,
+        'yaxis': yaxis,
+    }
+    fig = go.Figure(data=trace, layout=my_layout)
+    fig.show()
 
 # delete previous output
-os.system("del Output.wav")
+try:
+    os.system("del Output.wav")
+except:
+    print("could not delete output.wav for some reason")
+    print("(it may not have existed)")
 
 # load in the .wav file;
 # Data is the array of values,
 # fs is the sample rate
-fs, data = wavfile.read("173.wav")
+inputfile = "173.wav"
+fs, data = wavfile.read(inputfile)
 
 xs = []
 ys = []
-samples = 2048
+samples = 10240
 for e in range(0, len(data)):
-    if e < 2048:
-        xs.append(e)#data[e][0])
+    if e%500 == 0:
+        print("up to " + str(e))
+    if e < samples:
+        xs.append(e) #data[e][0])
         ys.append(data[e][1])
     else:
         break
 
-print(xs)
-print(ys)
-graph(xs, ys, "sound")
-
+try:
+    graph(xs, ys, inputfile)
+except:
+    print("failed to graph 1")
 
 #perform operations on the data
-print("horse")
+print("phase 1 complete")
+
+
+#for x in range(0,len(data)):
+
 
 # write it as output
-#wavfile.write("Output.wav", fs, data)
+wavfile.write("Output.wav", fs, data)
