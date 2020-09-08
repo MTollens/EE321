@@ -38,7 +38,7 @@ def graph(x, y, title="Title", xaxis=None, yaxis=None):
         print(e)
 
 
-def Update(data, min=0, max=None, samples=10240, verbose=False):
+def Update(data, min=0, max=None, samples=True, verbose=False):
     # updates the values of x and y so they can be used to graph
     x = []
     y = []
@@ -62,11 +62,13 @@ def Update(data, min=0, max=None, samples=10240, verbose=False):
     return x, y, z
 
 
-def work(data):
+def work(data, delay):
     # this is the function that does any of the actual work to the sound file
-    for x in range(5120, len(data)):#len(data)):
-        data[x] = [0, 0]
-    return data
+    zeros = numpy.zeros((len(data) + delay, 2))
+    for x in range(0,len(data)):
+        zeros[delay+x] = data[x]
+    print("stop")
+    return zeros
 
 
 # attempt to delete previous output(s)
@@ -86,6 +88,7 @@ inputfile = "Welcome.wav"
 fs, data = wavfile.read(inputfile)
 # in order to edit the file, we need to make it a copy so that we can get edit privileges
 data = data.copy()
+delay = int(fs)
 
 xs = [] # < this is the time value
 ys = [] # < this is the left channel
@@ -96,12 +99,12 @@ if global_verbose:
     graph(xs, ys, inputfile+"_Left")
     graph(xs, zs, inputfile+"_Right")
 
-wavfile.write("mid.wav", fs, data)
 
 # pre operation waveform
 print("phase 1 complete")
 
-data = work(data)
+
+data = work(data, delay)
 
 print("work complete")
 
