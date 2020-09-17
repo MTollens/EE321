@@ -71,6 +71,28 @@ def work(data, delay):
     return zeros
 
 
+def numpy_to_regular(ndarray):
+    # takes in
+    assert isinstance(ndarray, numpy.ndarray), "this is not the correct type of input for Np_to_regular"
+    result = ndarray.tolist()
+    return result
+
+def right_channel_only(Sound_list):
+    # removes the left channel
+    result = [0] * len(Sound_list)
+    for x in range(0, len(Sound_list)):
+        result[x] = Sound_list[x][0]
+    return result
+
+def regular_to_numpy(array):
+    assert isinstance(array, list), "not a list"
+    # takes in a regular python list and returns a numpy ndarray to be saved as a file.wav
+    result = numpy.asarray(array)
+    #result = numpy.ndarray([len(array),2])
+    #for x in range(0, len(result)):
+    #     result[x] = [int(round(array[x])), int(round(array[x]))]
+    return result
+
 # attempt to delete previous output(s)
 try:
     os.system("del Output.wav")
@@ -96,6 +118,7 @@ zs = [] # < this is the right channel
 
 xs, ys, zs = Update(data)
 if global_verbose:
+    #displays sound file before anything is done to it so we can get a baseline
     graph(xs, ys, inputfile+"_Left")
     graph(xs, zs, inputfile+"_Right")
 
@@ -103,16 +126,25 @@ if global_verbose:
 # pre operation waveform
 print("phase 1 complete")
 
+Clean_data = numpy_to_regular(data)
+clean = right_channel_only(Clean_data)
+print(clean)
+result = regular_to_numpy(clean)
+print(result)
+#data = work(data, delay)
 
-data = work(data, delay)
+
+
+
 
 print("work complete")
 
-xs, ys, zs = Update(data)
+xs, ys, zs = Update(result)
 if global_verbose:
+    # displays the waveform after we have done something to it so that we can see the change
     graph(xs, ys, inputfile+"_modified_Right")
     graph(xs, zs, inputfile+"_modified_Left")
 
 # write it as output
-wavfile.write("Output.wav", fs, data)
+wavfile.write("Output.wav", fs, result)
 print("end")
