@@ -38,7 +38,8 @@ def graph(x, y, title="Title", xaxis=None, yaxis=None):
         print(e)
 
 
-def Update(data, min=0, max=None, samples=True, verbose=False):
+def Update(data, min=0, max=None, samples=True, verbose=False, channels=2):
+
     # updates the values of x and y so they can be used to graph
     x = []
     y = []
@@ -53,9 +54,13 @@ def Update(data, min=0, max=None, samples=True, verbose=False):
             if e % 500 == 0:
                 print("up to " + str(e))
         if e < samples:
-            x.append(e)
-            y.append(data[e][0])
-            z.append(data[e][1])
+            if channels == 2:
+                x.append(e)
+                y.append(data[e][0])
+                z.append(data[e][1])
+            else:
+                x.append(e)
+                y.append(data[e])
         else:
             break
 
@@ -129,8 +134,13 @@ print("phase 1 complete")
 Clean_data = numpy_to_regular(data)
 clean = right_channel_only(Clean_data)
 print(clean)
+
+# do work on 'clean'
+
+
+
 result = regular_to_numpy(clean)
-print(result)
+result.dtype = numpy.int16
 #data = work(data, delay)
 
 
@@ -139,12 +149,12 @@ print(result)
 
 print("work complete")
 
-xs, ys, zs = Update(result)
+xs, ys, zs = Update(result, channels=1)
 if global_verbose:
     # displays the waveform after we have done something to it so that we can see the change
     graph(xs, ys, inputfile+"_modified_Right")
     graph(xs, zs, inputfile+"_modified_Left")
 
 # write it as output
-wavfile.write("Output.wav", fs, result)
+wavfile.write("Output.wav", int(fs*2), result)
 print("end")
