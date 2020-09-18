@@ -87,47 +87,21 @@ def Delay(data, delay):
     print("Delay Added")
     return zeros
 
-# Echo repeats a signal with a delay and applies a gain to each repition of the sigal
-# Echo is used for both echoing and reverb: echo delay>fs, reverb delay<fs
-# Echo has three inputs: data, delay, and n
-# data is the input signal
-# delay is the number of samples between each copied signal
-# n is the number of times the signal is copied (defaulted to 3)
-def Echo(data, delay, n=3):
-    # waveforms is a 2d array that holds teh data and teh copies of data
-    waveforms = [[0]*(len(data)+(n*delay))]*n
-    # output holds the final new waveform
-    output = [0]*(len(data)+(n*delay))
-    #gain is the coefficient multiplied to each succesive signal
-    gain = .5
-
-    #for loop copies data n times, and applies each respective delay
-    for x in range(0,n):
-        for y in range(0,len(data)):
-            waveforms[x][(x*delay)+y] += data[y]
-
-    # for loop combines the waveforms and applies gain
-    for x in range(0,n):
-        for y in range(0,len(data)):
-            #summation is the sum of all teh copies at one point in time
-            summation = 0
-            #divisor is how many waveforms overlap
-            divisor = 0
-
-            #for loop checks each waveform at one point and time
-            for z in range(0, n):
-                # if a signal exists on a particular waveform at this poin and time
-                # increment divisor (indicatin how many waves overlap at this point in time)
-                if abs(waveforms[z][y]) > 10:
-                    divisor += 1
-                # sum all the wave forms at this point in time
-                summation += waveforms[z][y]
-            # if no signal is found set devisor to 1 to avoid div by 0
-            if divisor == 0:
-                divisor = 1
-            # use the summation and divisor to average the signal at this point in time
-            # apply gain to this signal
-            output[(x*delay)+y] += round(((gain**x)*summation)/divisor)
+def Echo(data, delay):
+    # this is the function that does any of the actual work to the sound file
+    delay1 = [0]*(len(data) + delay)
+    delay2 = [0]*(len(data)+(2*delay))
+    gain = .8
+    output = [0]*(len(data)+(2*delay))
+    for x in range(0,len(data)):
+        delay1[delay+x] = round(gain*data[x])
+        delay2[(2*delay)+x] = round(gain*gain*data[x])
+    for x in range(0,len(data)):
+        output[x] += data[x]
+    for x in range(delay,len(delay1)):
+        output[x] += delay1[x]
+    for x in range(2*delay,len(delay2)):
+        output[x] += delay2[x]
     print("Echo, Echo")
     return output
 
@@ -241,14 +215,14 @@ if __name__ == "__main__":
     Clean_data = numpy_to_regular(data)
     clean = right_channel_only(Clean_data)
 
-    mode = "echo"
+
     if mode == "delay":
         # this is where the delay is added
         clean = Delay(clean, fs*6)
     elif mode == "echo":
         clean = Echo(clean, fs)
     elif mode == "reverb":
-        clean = Echo(clean, int(.25*fs), 7)
+        clean = Echo(clean, int(.25*fs))
     else:
         print("operation {} is not known".format(mode))
 
