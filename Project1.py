@@ -6,13 +6,20 @@ try:
     import plotly.graph_objs as go
 except:
     global_verbose = False
+    print("X+X+X+X+X+X+X+X+X+X")
+    print("NOTICE:")
     print("graphing utility not present")
+    print("this does not change program main functions")
+    print("But it will prevent graphical output")
+    print("\n if you want graphical output: \n")
     print("please install 'plotly'")
     print("py -m pip install plotly")
     print("on windows")
     print("or ")
     print("python3 -m pip install plotly")
     print("on linux")
+    print("installing the package will default ENABLE Graphical output")
+    print("X+X+X+X+X+X+X+X+X+X")
 
 # allows me to delete the old output if needed
 import os
@@ -77,15 +84,60 @@ def Update(data, min=0, max=None, samples=True, verbose=False, channels=2):
 
     return x, y
 
-
+# adds a delay to the beginning of the sound file
 def Delay(data, delay):
     print("delay of {} samples added".format(delay))
-    # this is the function that does any of the actual work to the sound file
     zeros = [0]*(len(data) + delay)
-    for x in range(0,len(data)):
+    # generates a python list of zeros, to act as a baseline for the delay generated
+    for x in range(0, len(data)):
         zeros[delay+x] = data[x]
+    # projects the original data into position on the list of zeros
     print("Delay Added")
     return zeros
+
+# Echo repeats a signal with a delay and applies a gain to each repition of the sigal
+# Echo is used for both echoing and reverb: echo delay>fs, reverb delay<fs
+# Echo has three inputs: data, delay, and n
+# data is the input signal
+# delay is the number of samples between each copied signal
+# n is the number of times the signal is copied (defaulted to 3)
+def Echo(data, delay, n=3):
+    # waveforms is a 2d array that holds the data and the copies of data
+    waveforms = [[0]*(len(data)+(n*delay))]*n
+    # output holds the final new waveform
+    output = [0]*(len(data)+(n*delay))
+    #gain is the coefficient multiplied to each succesive signal
+    gain = .5
+
+    #for loop copies data n times, and applies each respective delay
+    for x in range(0,n):
+        for y in range(0,len(data)):
+            waveforms[x][(x*delay)+y] += data[y]
+
+    # for loop combines the waveforms and applies gain
+    for x in range(0,n):
+        for y in range(0,len(data)):
+            #summation is the sum of all the copies at one point in time
+            summation = 0
+            #divisor is how many waveforms overlap
+            divisor = 0
+
+            #for loop checks each waveform at one point and time
+            for z in range(0, n):
+                # if a signal exists on a particular waveform at this poin and time
+                # increment divisor (indicatin how many waves overlap at this point in time)
+                if abs(waveforms[z][y]) > 10:
+                    divisor += 1
+                # sum all the wave forms at this point in time
+                summation += waveforms[z][y]
+            # if no signal is found set devisor to 1 to avoid div by 0
+            if divisor == 0:
+                divisor = 1
+            # use the summation and divisor to average the signal at this point in time
+            # apply gain to this signal
+            output[(x*delay)+y] += round(((gain**x)*summation)/divisor)
+    print("Echo, Echo")
+    return output
 
 
 def numpy_to_regular(ndarray):
@@ -107,17 +159,12 @@ def regular_to_numpy(array):
     assert isinstance(array, list), "not a list"
     # takes in a regular python list and returns a numpy ndarray to be saved as a file.wav
     result = numpy.asarray(array)
-    #result = numpy.ndarray([len(array),2])
-    #for x in range(0, len(result)):
-    #     result[x] = [int(round(array[x])), int(round(array[x]))]
     return result
-
-
 
 
 # global verbose is used for graphical output. plotly must be installed
 global_verbose = False
-mode = "delay"
+mode = "echo"
 # used later
 value = 0
 # load in the .wav file;
@@ -127,8 +174,10 @@ arguments = ['','','','','','']
 for x in range(0, len(sys.argv)):
     print(sys.argv)
     arguments[x] = sys.argv[x]
+# argument cleaning
+# prevents lack of argument when not provided through SYS
 
-
+print(arguments)
 if arguments[1]:
     if arguments[1] in ["man", "help", "h"]:
         print("Project 1 \n by Matthew Thompson and Andrew Sins")
@@ -152,7 +201,7 @@ if arguments[2]:
     elif arguments[2] in ["r", "reverb"]:
         mode = 'reverb'
 else:
-    mode = 'delay'
+    mode = 'reverb'
 
 if arguments[3]:
     try:
@@ -160,6 +209,9 @@ if arguments[3]:
     except:
         print("argument '{}' could not be understood as a value".format(arguments[3]))
         print("please use an integer value")
+        value = 3
+else:
+    value = 3
 
 
 
@@ -196,10 +248,12 @@ if __name__ == "__main__":
     Clean_data = numpy_to_regular(data)
     clean = right_channel_only(Clean_data)
 
-
     if mode == "delay":
-        # this is where the delay is added
-        clean = Delay(clean, fs*6)
+        clean = Delay(clean, int(fs*value))
+    elif mode == "echo":
+        clean = Echo(clean, fs, value)
+    elif mode == "reverb":
+        clean = Echo(clean, int(.25*fs), value)
     else:
         print("operation {} is not known".format(mode))
 
@@ -221,4 +275,3 @@ if __name__ == "__main__":
     # a lot of work for us and for the program
     wavfile.write("Output.wav", int(fs*2), result)
     print("Finished")
-
