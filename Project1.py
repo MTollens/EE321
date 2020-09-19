@@ -99,7 +99,7 @@ def Echo(data, delay, n=3):
     # output holds the final new waveform
     output = [0]*(len(data)+(n*delay))
     #gain is the coefficient multiplied to each succesive signal
-    gain = .5
+    gain = .25
 
     #for loop copies data n times, and applies each respective delay
     for x in range(0,n):
@@ -241,14 +241,14 @@ if __name__ == "__main__":
     Clean_data = numpy_to_regular(data)
     clean = right_channel_only(Clean_data)
 
-    mode = "echo"
+    mode = "reverb"
     if mode == "delay":
         # this is where the delay is added
         clean = Delay(clean, fs*6)
     elif mode == "echo":
         clean = Echo(clean, fs)
     elif mode == "reverb":
-        clean = Echo(clean, int(.25*fs), 7)
+        clean = Echo(clean, int(.25*fs), 3)
     else:
         print("operation {} is not known".format(mode))
 
